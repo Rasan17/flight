@@ -229,7 +229,7 @@
         // Redraw vertical timepoint indicator across all charts
         ['chart-alt', 'chart-vsi', 'chart-g'].forEach(id => {
             if (AppState.charts[id]) {
-                AppState.charts[id].draw();
+                AppState.charts[id].update('none');
             }
         });
     }
@@ -444,24 +444,35 @@
         id: 'currentTimeIndicator',
         afterDraw: (chart) => {
             if (AppState.currentTime === undefined || AppState.currentTime === null) return;
-            const points = AppState.trajectoryData?.points;
-            if (!points || points.length === 0) return;
+            const totalDuration = AppState.trajectoryData?.totalDuration;
+            if (!totalDuration) return;
 
             const ctx = chart.ctx;
             const xAxis = chart.scales.x;
             const yAxis = chart.scales.y;
             if (!xAxis || !yAxis) return;
 
-            const idx = Math.min(points.length - 1, Math.max(0, Math.round(AppState.currentTime / 0.5)));
-            const xPixel = xAxis.getPixelForValue(idx);
+            // Direct mathematical coordinate mapping: accurate, smooth, and robust across all Chart.js scales
+            const progress = Math.max(0, Math.min(1, AppState.currentTime / totalDuration));
+            const xPixel = xAxis.left + (xAxis.right - xAxis.left) * progress;
 
-            if (xPixel < xAxis.left || xPixel > xAxis.right) return;
+            if (isNaN(xPixel) || xPixel < xAxis.left - 2 || xPixel > xAxis.right + 2) return;
 
             ctx.save();
+
+            // Subtle vertical highlight beam
+            const bandW = 6;
+            const grad = ctx.createLinearGradient(0, yAxis.top, 0, yAxis.bottom);
+            grad.addColorStop(0, 'rgba(6, 182, 212, 0.28)');
+            grad.addColorStop(1, 'rgba(6, 182, 212, 0.04)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(xPixel - bandW / 2, yAxis.top, bandW, yAxis.bottom - yAxis.top);
+
+            // Glowing vertical hairline indicator
             ctx.setLineDash([4, 4]);
-            ctx.lineWidth = 2.5;
-            ctx.strokeStyle = '#06b6d4'; // Bright cyan HUD indicator
-            ctx.shadowColor = 'rgba(6, 182, 212, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#06b6d4'; // Bright HUD Cyan
+            ctx.shadowColor = '#06b6d4';
             ctx.shadowBlur = 8;
 
             ctx.beginPath();
@@ -469,21 +480,41 @@
             ctx.lineTo(xPixel, yAxis.bottom);
             ctx.stroke();
 
-            // Diamond/circle tracker at top
+            // Diamond / illuminated tracker bead at top
             ctx.setLineDash([]);
-            ctx.fillStyle = '#06b6d4';
+            ctx.fillStyle = '#22d3ee';
             ctx.shadowBlur = 10;
             ctx.beginPath();
-            ctx.arc(xPixel, yAxis.top, 5, 0, Math.PI * 2);
+            ctx.arc(xPixel, yAxis.top, 4.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // Time badge at top of line
+            // High-contrast timestamp badge at top
+            const timeText = `${AppState.currentTime.toFixed(1)}s`;
             ctx.font = 'bold 11px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
+            const textWidth = ctx.measureText(timeText).width;
+            const badgeW = textWidth + 12;
+            const badgeH = 18;
+            const badgeX = Math.max(xAxis.left, Math.min(xAxis.right - badgeW, xPixel - badgeW / 2));
+            const badgeY = Math.max(2, yAxis.top - badgeH - 3);
+
             ctx.shadowBlur = 4;
-            ctx.fillStyle = '#ffffff';
-            ctx.fillText(`${AppState.currentTime.toFixed(1)}s`, xPixel, yAxis.top - 2);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
+            } else {
+                ctx.rect(badgeX, badgeY, badgeW, badgeH);
+            }
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#38bdf8';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(timeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
 
             ctx.restore();
         }
@@ -501,7 +532,7 @@
         if (!config.plugins) config.plugins = [];
         config.plugins.push(verticalLinePlugin);
 
-        // Interactive click on chart to jump timepoint
+        // Interactive click on chart to jump timepoint seamlessly
         if (!canvas._hasScrubClick) {
             canvas.addEventListener('click', (evt) => {
                 const chart = AppState.charts[canvasId];
@@ -509,14 +540,11 @@
                 const xAxis = chart.scales.x;
                 const rect = canvas.getBoundingClientRect();
                 const x = evt.clientX - rect.left;
-                const valIdx = xAxis.getValueForPixel(x);
-                if (valIdx !== undefined && valIdx >= 0) {
-                    const points = AppState.trajectoryData?.points;
-                    if (points && points[valIdx]) {
-                        AppState.currentTime = points[valIdx].t;
-                        DOM.timeSlider.value = AppState.currentTime.toFixed(1);
-                        updateDashboard();
-                    }
+                if (x >= xAxis.left && x <= xAxis.right && AppState.trajectoryData) {
+                    const ratio = (x - xAxis.left) / (xAxis.right - xAxis.left);
+                    AppState.currentTime = Math.max(0, Math.min(AppState.trajectoryData.totalDuration, ratio * AppState.trajectoryData.totalDuration));
+                    DOM.timeSlider.value = AppState.currentTime.toFixed(1);
+                    updateDashboard();
                 }
             });
             canvas._hasScrubClick = true;
