@@ -225,6 +225,13 @@
 
         // Draw PFD Artificial Horizon
         drawPFD(pt.pitchDeg, pt.bank, pt.z, pt.vsiFpm, pt.nz);
+
+        // Redraw vertical timepoint indicator across all charts
+        ['chart-alt', 'chart-vsi', 'chart-g'].forEach(id => {
+            if (AppState.charts[id]) {
+                AppState.charts[id].draw();
+            }
+        });
     }
 
     // =========================================================================
@@ -432,6 +439,56 @@
         });
     }
 
+    // Custom Chart.js Plugin for Dynamic Vertical Timepoint Indicator
+    const verticalLinePlugin = {
+        id: 'currentTimeIndicator',
+        afterDraw: (chart) => {
+            if (AppState.currentTime === undefined || AppState.currentTime === null) return;
+            const points = AppState.trajectoryData?.points;
+            if (!points || points.length === 0) return;
+
+            const ctx = chart.ctx;
+            const xAxis = chart.scales.x;
+            const yAxis = chart.scales.y;
+            if (!xAxis || !yAxis) return;
+
+            const idx = Math.min(points.length - 1, Math.max(0, Math.round(AppState.currentTime / 0.5)));
+            const xPixel = xAxis.getPixelForValue(idx);
+
+            if (xPixel < xAxis.left || xPixel > xAxis.right) return;
+
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#06b6d4'; // Bright cyan HUD indicator
+            ctx.shadowColor = 'rgba(6, 182, 212, 0.8)';
+            ctx.shadowBlur = 8;
+
+            ctx.beginPath();
+            ctx.moveTo(xPixel, yAxis.top);
+            ctx.lineTo(xPixel, yAxis.bottom);
+            ctx.stroke();
+
+            // Diamond/circle tracker at top
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#06b6d4';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(xPixel, yAxis.top, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Time badge at top of line
+            ctx.font = 'bold 11px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.shadowBlur = 4;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(`${AppState.currentTime.toFixed(1)}s`, xPixel, yAxis.top - 2);
+
+            ctx.restore();
+        }
+    };
+
     function renderSingleChart(canvasId, config) {
         const canvas = document.getElementById(canvasId);
         if (!canvas) return;
@@ -439,6 +496,32 @@
         if (AppState.charts[canvasId]) {
             AppState.charts[canvasId].destroy();
         }
+        
+        // Attach vertical indicator plugin
+        if (!config.plugins) config.plugins = [];
+        config.plugins.push(verticalLinePlugin);
+
+        // Interactive click on chart to jump timepoint
+        if (!canvas._hasScrubClick) {
+            canvas.addEventListener('click', (evt) => {
+                const chart = AppState.charts[canvasId];
+                if (!chart) return;
+                const xAxis = chart.scales.x;
+                const rect = canvas.getBoundingClientRect();
+                const x = evt.clientX - rect.left;
+                const valIdx = xAxis.getValueForPixel(x);
+                if (valIdx !== undefined && valIdx >= 0) {
+                    const points = AppState.trajectoryData?.points;
+                    if (points && points[valIdx]) {
+                        AppState.currentTime = points[valIdx].t;
+                        DOM.timeSlider.value = AppState.currentTime.toFixed(1);
+                        updateDashboard();
+                    }
+                }
+            });
+            canvas._hasScrubClick = true;
+        }
+
         AppState.charts[canvasId] = new Chart(ctx, config);
     }
 
