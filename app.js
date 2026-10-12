@@ -480,27 +480,74 @@
             ctx.lineTo(xPixel, yAxis.bottom);
             ctx.stroke();
 
-            // Diamond / illuminated tracker bead at top
+            // Determine respective Y-value for this specific chart
+            const pt = getCurrentPoint();
+            if (!pt) return;
+
+            let yValText = '';
+            let valColor = '#38bdf8';
+            let yValNum = null;
+
+            if (chart.canvas.id === 'chart-alt') {
+                yValText = `${Math.round(pt.z).toLocaleString()} ft`;
+                valColor = '#06b6d4';
+                yValNum = pt.z;
+            } else if (chart.canvas.id === 'chart-vsi') {
+                yValText = `${pt.vsiFpm > 0 ? '+' : ''}${pt.vsiFpm.toLocaleString()} fpm`;
+                valColor = '#c084fc';
+                yValNum = pt.vsiFpm;
+            } else if (chart.canvas.id === 'chart-g') {
+                yValText = `${pt.nz > 0 ? '+' : ''}${pt.nz.toFixed(2)} g`;
+                if (pt.nz > 2.5) valColor = '#f43f5e';
+                else if (pt.nz < 0.5) valColor = '#38bdf8';
+                else valColor = '#f59e0b';
+                yValNum = pt.nz;
+            } else {
+                yValText = `${AppState.currentTime.toFixed(1)}s`;
+            }
+
+            // Glowing intersection bead directly on the trajectory curve
+            if (yValNum !== null) {
+                const yPixel = yAxis.getPixelForValue(yValNum);
+                if (!isNaN(yPixel) && yPixel >= yAxis.top - 2 && yPixel <= yAxis.bottom + 2) {
+                    ctx.save();
+                    ctx.setLineDash([]);
+                    ctx.fillStyle = valColor;
+                    ctx.shadowColor = valColor;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.arc(xPixel, yPixel, 5, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.arc(xPixel, yPixel, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // Top indicator bead
             ctx.setLineDash([]);
-            ctx.fillStyle = '#22d3ee';
+            ctx.fillStyle = valColor;
+            ctx.shadowColor = valColor;
             ctx.shadowBlur = 10;
             ctx.beginPath();
             ctx.arc(xPixel, yAxis.top, 4.5, 0, Math.PI * 2);
             ctx.fill();
 
-            // High-contrast timestamp badge at top
-            const timeText = `${AppState.currentTime.toFixed(1)}s`;
+            // High-contrast Y-value telemetry badge at top
             ctx.font = 'bold 11px monospace';
-            const textWidth = ctx.measureText(timeText).width;
-            const badgeW = textWidth + 12;
-            const badgeH = 18;
+            const textWidth = ctx.measureText(yValText).width;
+            const badgeW = textWidth + 14;
+            const badgeH = 19;
             const badgeX = Math.max(xAxis.left, Math.min(xAxis.right - badgeW, xPixel - badgeW / 2));
             const badgeY = Math.max(2, yAxis.top - badgeH - 3);
 
-            ctx.shadowBlur = 4;
-            ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-            ctx.strokeStyle = '#06b6d4';
-            ctx.lineWidth = 1;
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+            ctx.strokeStyle = valColor;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             if (ctx.roundRect) {
                 ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 4);
@@ -511,10 +558,10 @@
             ctx.stroke();
 
             ctx.shadowBlur = 0;
-            ctx.fillStyle = '#38bdf8';
+            ctx.fillStyle = valColor;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(timeText, badgeX + badgeW / 2, badgeY + badgeH / 2);
+            ctx.fillText(yValText, badgeX + badgeW / 2, badgeY + badgeH / 2);
 
             ctx.restore();
         }
