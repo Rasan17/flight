@@ -1,0 +1,477 @@
+/*
+ * Flight Dynamics & G-Force Trajectory Analyzer - Stylesheet
+ * Aviation HUD / Primary Flight Display Aesthetic with Dark Cockpit & Clean Light Modes
+ * Conceived, designed and directed by Dr G Narenthiran MB ChB BSc(MedSci)(Hons) FEBNS FRCS(SN)
+ * g_narenthiran@hotmail.com • © 2026 Dr G Narenthiran. All rights reserved.
+ */
+
+:root {
+    --bg-cockpit: #080d1a;
+    --bg-card: #0f172a;
+    --bg-card-elevated: #1e293b;
+    --border-card: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(56, 189, 248, 0.35);
+    
+    --hud-green: #10b981;
+    --hud-cyan: #06b6d4;
+    --hud-blue: #38bdf8;
+    --hud-amber: #f59e0b;
+    --hud-rose: #f43f5e;
+    --hud-purple: #a855f7;
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-full: 9999px;
+    
+    --shadow-soft: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    --shadow-hud: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+[data-theme="light"] {
+    --bg-cockpit: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-elevated: #f1f5f9;
+    --border-card: rgba(0, 0, 0, 0.08);
+    --border-glow: rgba(14, 165, 233, 0.4);
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    
+    --shadow-soft: 0 4px 15px rgba(0, 0, 0, 0.06);
+    --shadow-hud: 0 4px 15px rgba(6, 182, 212, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--bg-cockpit);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 24px 28px;
+    line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.flight-wrapper {
+    max-width: 1540px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+/* Header */
+.flight-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    padding: 20px 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    box-shadow: var(--shadow-soft);
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.brand-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--hud-cyan), var(--hud-blue));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: var(--shadow-hud);
+}
+
+.brand-info h1 {
+    font-size: 22px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--hud-cyan), var(--hud-blue) 50%, var(--hud-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.brand-info .subtitle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.brand-info .attribution {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+.brand-info .attribution a {
+    color: var(--hud-cyan);
+    text-decoration: none;
+}
+
+/* Common Card */
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-lg);
+    padding: 22px;
+    box-shadow: var(--shadow-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-card);
+    padding-bottom: 12px;
+}
+
+.card-title-group h2 {
+    font-size: 17px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary);
+}
+
+.card-title-group p {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* Stat Cards */
+.stats-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+}
+
+.stat-box {
+    background: var(--bg-card-elevated);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-box .label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.stat-box .value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.stat-box .detail {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+}
+
+/* Cockpit HUD & PFD Instruments Grid */
+.hud-cockpit-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 1080px) {
+    .hud-cockpit-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pfd-container {
+    background: #020617;
+    border: 2px solid rgba(6, 182, 212, 0.4);
+    border-radius: var(--radius-lg);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-hud);
+    position: relative;
+    overflow: hidden;
+}
+
+.pfd-canvas {
+    width: 100%;
+    max-width: 300px;
+    height: 300px;
+    background: #000000;
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.flight-gauges-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.gauge-badge {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    text-align: center;
+}
+
+.gauge-badge .g-name {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.gauge-badge .g-val {
+    font-size: 17px;
+    font-weight: 800;
+    margin-top: 2px;
+}
+
+/* Time Scrubber & Animation Controls */
+.playback-bar {
+    background: var(--bg-card-elevated);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.time-slider-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 200px;
+}
+
+.time-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.15);
+    outline: none;
+    cursor: pointer;
+}
+
+.time-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--hud-cyan);
+    box-shadow: 0 0 10px var(--hud-cyan);
+    cursor: pointer;
+}
+
+/* Charts Grid */
+.charts-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.chart-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chart-canvas-box {
+    position: relative;
+    width: 100%;
+    height: 240px;
+}
+
+/* Physiological Callout Cards */
+.physiology-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.physio-card {
+    background: var(--bg-card-elevated);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-md);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.physio-card.red-zone {
+    border-left: 4px solid var(--hud-rose);
+}
+
+.physio-card.zero-zone {
+    border-left: 4px solid var(--hud-blue);
+}
+
+.physio-card.high-zone {
+    border-left: 4px solid var(--hud-amber);
+}
+
+.physio-card.extreme-zone {
+    border-left: 4px solid var(--hud-purple);
+}
+
+.physio-card h3 {
+    font-size: 14.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.physio-card p {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Interactive Tuning Parameters */
+.tuning-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.param-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.param-input-group label {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.control-input {
+    background: var(--bg-card-elevated);
+    border: 1px solid var(--border-card);
+    color: var(--text-primary);
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    outline: none;
+    font-weight: 600;
+}
+
+.control-input:focus {
+    border-color: var(--hud-cyan);
+    box-shadow: 0 0 0 2px rgba(6, 182, 212, 0.2);
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--hud-cyan), var(--hud-blue));
+    color: #ffffff;
+}
+
+.btn-secondary {
+    background: var(--bg-card-elevated);
+    border-color: var(--border-card);
+    color: var(--text-primary);
+}
+
+.btn-emerald {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #ffffff;
+}
+
+/* Footer */
+.flight-footer {
+    border-top: 1px solid var(--border-card);
+    padding: 24px 0 12px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+}
+
+.flight-footer strong {
+    color: var(--hud-cyan);
+}
+
+.flight-footer a {
+    color: var(--hud-cyan);
+    text-decoration: none;
+}
+
+.flight-footer .disclaimer {
+    font-size: 11px;
+    color: var(--text-muted);
+    max-width: 860px;
+    line-height: 1.5;
+}

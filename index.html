@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flydubai FZ1073 Flight Dynamics & G-Force Trajectory Analyzer</title>
+    <meta name="description" content="Kinematic and aeromedical G-force analysis of the Flydubai FZ1073 flight plunge, steep dive, and sharp pullout recovery. Features cockpit Primary Flight Display, real-time G-meter, and physiological tolerance assessment.">
+    <meta name="author" content="Dr G Narenthiran MB ChB BSc(MedSci)(Hons) FEBNS FRCS(SN)">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="flight-wrapper">
+
+        <!-- ===================================================================
+             APP HEADER & ATTRIBUTION
+             =================================================================== -->
+        <header class="flight-header">
+            <div class="brand-section">
+                <div class="brand-icon">✈️</div>
+                <div class="brand-info">
+                    <h1>Flydubai FZ1073 Flight Dynamics & G-Force Analyzer</h1>
+                    <div class="subtitle">Aeronautical Kinematics, G-Force Trajectory & Aeromedical Physiological Impact</div>
+                    <div class="attribution">
+                        Conceived, designed and directed by <strong>Dr G Narenthiran</strong> MB ChB BSc(MedSci)(Hons) FEBNS FRCS(SN) &bull; <a href="mailto:g_narenthiran@hotmail.com">g_narenthiran@hotmail.com</a><br>
+                        Neurosurgery Research Listserv, UK &bull; <em>Implemented with Antigravity AI pair programming</em><br>
+                        <strong>&copy; 2026 Dr G Narenthiran. All rights reserved.</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button id="theme-toggle" class="btn btn-secondary">
+                    ☀️ Light
+                </button>
+            </div>
+        </header>
+
+        <!-- ===================================================================
+             KEY METRICS SUMMARY GRID
+             =================================================================== -->
+        <section class="stats-summary-grid">
+            <div class="stat-box">
+                <span class="label">Minimum Load Factor (Pushover)</span>
+                <span id="stat-min-g" class="value" style="color: var(--hud-blue);">-- g</span>
+                <span class="detail">Negative G / Zero-G cabin float</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Peak Positive G (Sharp Pullout)</span>
+                <span id="stat-max-g" class="value" style="color: var(--hud-rose);">-- g</span>
+                <span class="detail">High load / Gray-out / Body pinned down</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Peak Vertical Descent Rate</span>
+                <span id="stat-max-descent" class="value" style="color: var(--hud-amber);">-- fpm</span>
+                <span class="detail">Maximum dive speed</span>
+            </div>
+            <div class="stat-box">
+                <span class="label">Peak Vertical Climb Rate</span>
+                <span id="stat-max-climb" class="value" style="color: var(--hud-green);">-- fpm</span>
+                <span class="detail">Post-recovery zoom climb</span>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             COCKPIT PFD INSTRUMENTS & TIME SCRUBBER
+             =================================================================== -->
+        <section class="hud-cockpit-grid">
+            
+            <!-- Left: Primary Flight Display (PFD) HUD Canvas -->
+            <div class="pfd-container">
+                <h3 style="font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--hud-cyan); margin-bottom: 8px;">
+                    Primary Flight Display (PFD)
+                </h3>
+                <canvas id="pfd-canvas" class="pfd-canvas" width="300" height="300"></canvas>
+                
+                <div class="flight-gauges-row">
+                    <div class="gauge-badge">
+                        <div class="g-name">Altitude</div>
+                        <div id="gauge-alt" class="g-val" style="color: var(--hud-cyan);">-- ft</div>
+                    </div>
+                    <div class="gauge-badge">
+                        <div class="g-name">Vertical Speed</div>
+                        <div id="gauge-vsi" class="g-val">-- fpm</div>
+                    </div>
+                    <div class="gauge-badge">
+                        <div class="g-name">G-Force (Nz)</div>
+                        <div id="gauge-g" class="g-val">-- g</div>
+                    </div>
+                    <div class="gauge-badge">
+                        <div class="g-name">Pitch Angle</div>
+                        <div id="gauge-pitch" class="g-val">--&deg;</div>
+                    </div>
+                    <div class="gauge-badge" style="grid-column: span 2;">
+                        <div class="g-name">Eye-Level Blood Pressure Delta</div>
+                        <div id="gauge-eye-p" class="g-val" style="color: var(--hud-amber);">-- mmHg</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Playback Controls & Charts -->
+            <div class="charts-stack">
+                
+                <!-- Timeline Scrubber & Animation -->
+                <div class="playback-bar">
+                    <button id="play-pause-btn" class="btn btn-primary">
+                        ▶ Play
+                    </button>
+                    <button id="reset-time-btn" class="btn btn-secondary">
+                        ⏮ Reset
+                    </button>
+                    
+                    <div class="time-slider-wrapper">
+                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; font-weight: 700;">
+                            <span>Elapsed Time: <strong id="current-time-val" style="color: var(--hud-cyan);">0.0 s</strong></span>
+                            <span style="color: var(--text-muted);">Event Duration: ~220 s</span>
+                        </div>
+                        <input type="range" id="time-slider" class="time-slider" min="0" max="220" step="0.5" value="0">
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;">
+                        <span>Speed:</span>
+                        <select id="speed-select" class="control-input" style="padding: 4px 8px;">
+                            <option value="1">1x Real-time</option>
+                            <option value="2">2x Fast</option>
+                            <option value="5" selected>5x Speed</option>
+                            <option value="10">10x Speed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 1. Altitude Profile -->
+                <div class="chart-card">
+                    <div class="card-title-group">
+                        <h2>Altitude Profile vs. Time $z(t)$</h2>
+                        <p>Cruise (34,000 ft) &rarr; Initial Plunge (19,875 ft at 29s) &rarr; Trough (16,600 ft at 91s) &rarr; Climb Peak (21,725 ft) &rarr; Final (15,000 ft)</p>
+                    </div>
+                    <div class="chart-canvas-box">
+                        <canvas id="chart-alt"></canvas>
+                    </div>
+                </div>
+
+                <!-- 2. Vertical Velocity -->
+                <div class="chart-card">
+                    <div class="card-title-group">
+                        <h2>Vertical Velocity Profile $v_z(t)$ (Feet per Minute)</h2>
+                        <p>Descent velocity reaching ~ -38,000 ft/min during plunge, followed by +10,000 ft/min zoom-climb</p>
+                    </div>
+                    <div class="chart-canvas-box">
+                        <canvas id="chart-vsi"></canvas>
+                    </div>
+                </div>
+
+                <!-- 3. G-Force Profile (Normal Load Factor Nz) -->
+                <div class="chart-card">
+                    <div class="card-title-group">
+                        <h2>Estimated G-Force (Normal Load Factor $N_z$) Profile</h2>
+                        <p>Showing Pushover weightlessness ($0\text{g}$ to $-0.4\text{g}$) and sharp pullout with steep bank ($+3.5\text{g}$ to $+4.5\text{g}$)</p>
+                    </div>
+                    <div class="chart-canvas-box">
+                        <canvas id="chart-g"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             AEROMEDICAL & NEUROSURGICAL G-FORCE ANALYSIS
+             =================================================================== -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <h2>🧠 Aeromedical & Neurosurgical G-Force Analysis (FZ1073 Event)</h2>
+                    <p>Physiological, cerebral vascular, and biomechanical breakdown of what occupants and crew experienced during each phase.</p>
+                </div>
+            </div>
+
+            <div class="physiology-grid">
+                
+                <div class="physio-card zero-zone">
+                    <h3>
+                        <span>1. Initial Dive Pushover</span>
+                        <span style="color: var(--hud-blue); font-size: 13px;">0.0 g to -0.4 g</span>
+                    </h3>
+                    <p>
+                        <strong>Duration:</strong> Initial 4–6 seconds of the 29s plunge (34,000 ft down to 19,875 ft).<br>
+                        <strong>Biomechanical Effect:</strong> Complete weightlessness / negative G pushover. Unrestrained occupants, flight attendants, and loose cabin items floated freely off seats and struck the ceiling.<br>
+                        <strong>Neurosurgical / Hemodynamic:</strong> Reversal of hydrostatic venous gradient, cephalad venous congestion, acute facial engorgement, increased intracranial venous pressure, and "red-out" sensation.
+                    </p>
+                </div>
+
+                <div class="physio-card extreme-zone">
+                    <h3>
+                        <span>2. Sharp Pullout & Steep Bank</span>
+                        <span style="color: var(--hud-rose); font-size: 13px;">+3.5 g to +4.5 g</span>
+                    </h3>
+                    <p>
+                        <strong>Duration:</strong> 3-second rapid pullout at 16,600 ft with steep bank turn (&phi; &asymp; 45&deg;–60&deg;).<br>
+                        <strong>Biomechanical Effect:</strong> Occupants felt 3.5 to 4.5 times their normal body weight. A 75 kg human felt like 260–340 kg. Arm muscles required 4&times; force to lift, making the struggle for the control column extraordinarily strenuous.<br>
+                        <strong>Visual / Cerebral:</strong> Eye-level arterial pressure dropped by 70–95 mmHg. Blood pooled into the abdomen and lower extremities, causing progressive visual gray-out, peripheral visual constriction, and high risk of G-LOC (G-induced loss of consciousness).
+                    </p>
+                </div>
+
+                <div class="physio-card high-zone">
+                    <h3>
+                        <span>3. Zoom Climb</span>
+                        <span style="color: var(--hud-amber); font-size: 13px;">+1.4 g to +1.8 g</span>
+                    </h3>
+                    <p>
+                        <strong>Duration:</strong> 45-second rapid ascent (16,600 ft &rarr; 21,725 ft).<br>
+                        <strong>Dynamics:</strong> Aircraft converted tremendous kinetic speed into potential altitude (averaging +6,833 ft/min climb). Occupants experienced moderate positive G load, stabilizing visual fields as G-forces eased back toward 1.2–1.4 g near the apogee.
+                    </p>
+                </div>
+
+                <div class="physio-card red-zone">
+                    <h3>
+                        <span>4. Second Plunge & Level-off</span>
+                        <span style="color: var(--hud-cyan); font-size: 13px;">0.4 g &rarr; +1.4 g &rarr; 1.0 g</span>
+                    </h3>
+                    <p>
+                        <strong>Duration:</strong> 64-second second dive (21,725 ft down to 15,000 ft).<br>
+                        <strong>Resolution:</strong> Mild pushover at the second pitch-down followed by positive G arrest as the relief crew permanently stabilized controls and settled into level flight at 15,000 ft.<br>
+                        <strong>Airframe Note:</strong> The Boeing 737 is certified to +2.5 g clean limit. The +3.5 to +4.5 g pullout severely stressed the airframe, approaching its ultimate design limits.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             INTERACTIVE PARAMETER TUNING
+             =================================================================== -->
+        <section class="card">
+            <div class="card-header">
+                <div class="card-title-group">
+                    <h2>⚙️ Interactive Trajectory Parameters & Sensitivity Analysis</h2>
+                    <p>Adjust flight parameters to test different dive entry rates, pullout durations, and bank angles.</p>
+                </div>
+            </div>
+
+            <div class="tuning-grid">
+                <div class="param-input-group">
+                    <label>Initial Cruise Altitude (ft)</label>
+                    <input type="number" id="input-cruise-alt" class="control-input" value="34000">
+                </div>
+                <div class="param-input-group">
+                    <label>Plunge 1 Altitude Loss (ft)</label>
+                    <input type="number" id="input-p1-drop" class="control-input" value="14125">
+                </div>
+                <div class="param-input-group">
+                    <label>Plunge 1 Duration (s)</label>
+                    <input type="number" id="input-p1-time" class="control-input" value="29">
+                </div>
+                <div class="param-input-group">
+                    <label>Lowest Altitude (ft)</label>
+                    <input type="number" id="input-lowest-alt" class="control-input" value="16600">
+                </div>
+                <div class="param-input-group">
+                    <label>Time to Lowest Point (s)</label>
+                    <input type="number" id="input-lowest-time" class="control-input" value="91">
+                </div>
+                <div class="param-input-group">
+                    <label>Pullout Transition (s)</label>
+                    <input type="number" id="input-pullout-dur" class="control-input" value="3.0" step="0.5">
+                </div>
+                <div class="param-input-group">
+                    <label>Turn Bank Angle (&deg;)</label>
+                    <input type="number" id="input-bank-deg" class="control-input" value="45" min="0" max="75">
+                </div>
+                <div class="param-input-group">
+                    <label>Zoom Climb Peak (ft)</label>
+                    <input type="number" id="input-climb-peak" class="control-input" value="21725">
+                </div>
+                <div class="param-input-group">
+                    <label>Climb Duration (s)</label>
+                    <input type="number" id="input-climb-dur" class="control-input" value="45">
+                </div>
+                <div class="param-input-group">
+                    <label>Plunge 2 Drop (ft)</label>
+                    <input type="number" id="input-p2-drop" class="control-input" value="6725">
+                </div>
+                <div class="param-input-group">
+                    <label>Plunge 2 Duration (s)</label>
+                    <input type="number" id="input-p2-dur" class="control-input" value="64">
+                </div>
+                <div class="param-input-group">
+                    <label>Final Altitude (ft)</label>
+                    <input type="number" id="input-final-alt" class="control-input" value="15000">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button id="reset-defaults-btn" class="btn btn-secondary">
+                    Reset Defaults
+                </button>
+                <button id="apply-params-btn" class="btn btn-primary">
+                    ⚡ Recalculate Trajectory & G-Forces
+                </button>
+            </div>
+        </section>
+
+        <!-- ===================================================================
+             FOOTER & ATTRIBUTION
+             =================================================================== -->
+        <footer class="flight-footer">
+            <div>
+                Conceived, designed and directed by <strong>Dr G Narenthiran</strong> MB ChB BSc(MedSci)(Hons) FEBNS FRCS(SN) &bull; <a href="mailto:g_narenthiran@hotmail.com">g_narenthiran@hotmail.com</a><br>
+                Neurosurgery Research Listserv, United Kingdom &bull; <em>Implemented with Antigravity AI pair programming</em><br>
+                <strong>&copy; 2026 Dr G Narenthiran. All rights reserved.</strong>
+            </div>
+            <div class="disclaimer">
+                ⚠️ <strong>Aviation & Aeromedical Research Disclaimer:</strong> This flight dynamics and G-force calculator is built for aerodynamic simulation, educational demonstration, and aeromedical research. Kinematic values are derived from reported altitude milestones and physical equations of motion.
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="chart.umd.min.js"></script>
+    <script src="flight-math.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
